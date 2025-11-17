@@ -55,8 +55,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: "pnpm"
+          node-version: 24
 
       - run: pnpm install
 
@@ -72,4 +71,5 @@ jobs:
         with:
           browser: chrome
           config: baseUrl=http://127.0.0.1:5173
+          config-file: cypress.config.ts
           start: ""
