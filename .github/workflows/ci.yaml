@@ -33,16 +33,14 @@ jobs:
       - name: Run Cypress Component Tests
         uses: cypress-io/github-action@v6
         with:
-          component: true
+          # This command automatically sets the
+          # CYPRESS_INTERNAL_TESTING_TYPE env var
+          command: pnpm cypress run --component
           browser: chrome
-        env:
-          # --- THIS IS THE FIX ---
-          # This tells the component runner to override the
-          # baseUrl from your config and use an empty one.
-          CYPRESS_BASE_URL: ""
+        # NO ENV VARS NEEDED HERE! The config is now smart.
 
   ###############################################
-  # E2E TESTS (This job is already working perfectly)
+  # E2E TESTS (This job is already working)
   ###############################################
   e2e-tests:
     runs-on: ubuntu-latest
@@ -75,4 +73,5 @@ jobs:
           start: pnpm run dev
           wait-on: ${{ env.APP_URL }}
         env:
+          # This job correctly sets the baseUrl
           CYPRESS_BASE_URL: ${{ env.APP_URL }}
