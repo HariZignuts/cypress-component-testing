@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { defineConfig } from "cypress";
 import * as path from "path";
 import vitePreprocessor from "cypress-vite";
@@ -44,5 +45,6 @@ export default defineConfig({
         },
       },
     },
+    setupNodeEvents(on, config) {},
   },
 });
