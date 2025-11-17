@@ -33,14 +33,18 @@ jobs:
       - name: Run Cypress Component Tests
         uses: cypress-io/github-action@v6
         with:
-          # This command automatically sets the
-          # CYPRESS_INTERNAL_TESTING_TYPE env var
-          command: pnpm cypress run --component
+          # --- THIS IS THE FIX ---
+          # We REMOVE the "command:" line.
+          # "component: true" is all we need.
+          # The action will now correctly run in component mode
+          # and the "browser: chrome" line will work.
+          component: true
           browser: chrome
-        # NO ENV VARS NEEDED HERE! The config is now smart.
+          # No env vars are needed here.
+          # Your smart config file will handle it.
 
   ###############################################
-  # E2E TESTS (This job is already working)
+  # E2E TESTS (This job is already working perfectly)
   ###############################################
   e2e-tests:
     runs-on: ubuntu-latest
@@ -73,5 +77,4 @@ jobs:
           start: pnpm run dev
           wait-on: ${{ env.APP_URL }}
         env:
-          # This job correctly sets the baseUrl
           CYPRESS_BASE_URL: ${{ env.APP_URL }}
