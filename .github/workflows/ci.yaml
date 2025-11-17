@@ -36,8 +36,8 @@ jobs:
           component: true
           browser: chrome
         env:
-          # --- THIS IS THE FIX for the component test error ---
-          # We override the baseUrl from your config file.
+          # --- THIS IS FIX #1 ---
+          # Unsets the baseUrl from your config, fixing the "Failed to fetch" error.
           CYPRESS_BASE_URL: ""
 
   ###############################################
@@ -46,7 +46,6 @@ jobs:
   e2e-tests:
     runs-on: ubuntu-latest
 
-    # Define the URL here so we can re-use it
     env:
       APP_URL: http://127.0.0.1:5173
 
@@ -68,9 +67,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # --- THIS IS THE FIX for the E2E test error ---
-      # We let the Cypress Action handle starting the server.
+      # --- THIS IS FIX #2 ---
       # This replaces your manual "pnpm dev &" and "wait-on" steps.
+      # This is the robust pattern that solves the "sendResponse" error.
       - name: Run Cypress E2E Tests
         uses: cypress-io/github-action@v6
         with:
@@ -81,5 +80,4 @@ jobs:
           wait-on: ${{ env.APP_URL }}
         env:
           # 3. Passes the URL to Cypress as its baseUrl
-          #    This matches the 'wait-on' and your config's default
           CYPRESS_BASE_URL: ${{ env.APP_URL }}

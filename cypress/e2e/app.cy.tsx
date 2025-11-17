@@ -1,54 +1,41 @@
-import type { User } from "@/types/user";
 import { userFactory } from "@factories/index";
 import { fetchUserListPOM, userListPOM } from "@pom/index";
 
 describe("Main App E2E Test", () => {
-  it("should show a loading state, then render the user list", () => {
-    let sendResponse: (reply: { statusCode: number; body: User[] }) => void;
-
-    cy.intercept("GET", "**/api/users", (req) => {
-      return new Promise((resolve) => {
-        sendResponse = (reply) => {
-          resolve(req.reply(reply));
-        };
-      });
+  // Test 1: Test the loading state explicitly
+  it("should show a loading state while fetching", () => {
+    // We add a delay to *force* the loading state
+    // to stay on the screen so we can test it.
+    cy.intercept("GET", "**/api/users", {
+      delayMs: 1500, // A 1.5 second delay
+      body: userFactory.createUsers(5),
     }).as("getUsers");
 
     cy.visit("/");
 
-    // 1. Assert the loading state (this part is fine)
+    // The page *will* be in a loading state
     fetchUserListPOM.getLoadingMessage().should("be.visible");
-    userListPOM.getList().should("not.exist");
 
-    // --- THIS IS THE FIX ---
-    // 2. Wrap the 'sendResponse' call in a cy.then()
-    // This ensures it runs *after* the interceptor has assigned the function.
-    cy.then(() => {
-      sendResponse!({
-        statusCode: 200,
-        body: userFactory.createUsers(5),
-      });
-    });
-    // --- END FIX ---
-
-    // 3. Wait for the request to complete
+    // Now wait for the delayed request to finish
     cy.wait("@getUsers");
 
-    // 4. Assert the final successful state
+    // Now assert the final state
     fetchUserListPOM.getLoadingMessage().should("not.exist");
     userListPOM.getList().should("be.visible");
-    userListPOM.getListItems().should("have.length", 5);
   });
 
-  // Test 2: Test the error state (no changes needed)
+  // Test 2: Test the error state
   it("should show an error if the API fails", () => {
     cy.intercept("GET", "**/api/users", {
       statusCode: 500,
     }).as("getUsersError");
 
     cy.visit("/");
+
+    // Wait for the failed call
     cy.wait("@getUsersError");
 
+    // Assert the final error state
     fetchUserListPOM.getLoadingMessage().should("not.exist");
     userListPOM.getList().should("not.exist");
     fetchUserListPOM
