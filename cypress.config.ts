@@ -6,8 +6,23 @@ import vitePreprocessor from "cypress-vite";
 
 const defaultBaseUrl = "http://127.0.0.1:5173";
 
-// 1. Define the path to our new, safe config file
-const cypressViteConfigPath = path.resolve(__dirname, "cypress.vite.config.ts");
+// --- 1. Define your Vite config in ONE place ---
+// We need to explicitly set the root to __dirname
+// to override the `root: 'src'` from your main vite.config.ts
+const sharedViteConfig = {
+  root: __dirname,
+  resolve: {
+    alias: {
+      "@/components": path.resolve(__dirname, "src/components"),
+      "@/core": path.resolve(__dirname, "src/core"),
+      "@/types": path.resolve(__dirname, "src/types"),
+      "@/assets": path.resolve(__dirname, "src/assets"),
+      "@pom": path.resolve(__dirname, "cypress/support/pom"),
+      "@factories": path.resolve(__dirname, "cypress/support/factories"),
+      "@fixtures": path.resolve(__dirname, "cypress/fixtures"),
+    },
+  },
+};
 
 export default defineConfig({
   e2e: {
@@ -18,8 +33,8 @@ export default defineConfig({
       on(
         "file:preprocessor",
         vitePreprocessor({
-          // 2. Point the E2E preprocessor to the new file
-          configFile: cypressViteConfigPath,
+          // 2. Use the shared config for E2E spec files
+          ...sharedViteConfig,
         })
       );
 
@@ -33,17 +48,18 @@ export default defineConfig({
       framework: "react",
       bundler: "vite",
 
-      // 3. Point the component dev server to the new file
-      viteConfig: {
-        configFile: cypressViteConfigPath,
-      },
+      // --- 3. THIS IS THE FIX ---
+      // We pass the viteConfig as a FUNCTION.
+      // This forces cypress-vite to use this config
+      // and NOT load the default vite.config.ts.
+      viteConfig: () => sharedViteConfig,
     },
     setupNodeEvents(on, config) {
       on(
         "file:preprocessor",
         vitePreprocessor({
-          // 4. Point the component preprocessor to the new file
-          configFile: cypressViteConfigPath,
+          // 4. Use the shared config for Component spec files
+          ...sharedViteConfig,
         })
       );
       return config;
