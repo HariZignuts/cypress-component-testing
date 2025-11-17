@@ -4,7 +4,7 @@ import vitePreprocessor from "cypress-vite";
 const defaultBaseUrl = "http://127.0.0.1:5173";
 export default defineConfig({
   e2e: {
-    baseUrl: process.env.CYPRESS_BASE_URL || defaultBaseUrl,
+    baseUrl: process.env.CYPRESS_BASE_URL ?? defaultBaseUrl,
     specPattern: "cypress/e2e/**/*.cy.{js,jsx,ts,tsx}",
     supportFile: "cypress/support/e2e.ts",
     setupNodeEvents(on, config) {
@@ -20,7 +20,7 @@ export default defineConfig({
       );
 
       // make sure env is available inside your tests via Cypress.env()
-      config.env.BASE_URL = process.env.CYPRESS_BASE_URL || defaultBaseUrl;
+      config.env.BASE_URL = process.env.CYPRESS_BASE_URL ?? defaultBaseUrl;
       return config;
     },
   },
