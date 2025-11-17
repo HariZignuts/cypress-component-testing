@@ -6,21 +6,8 @@ import vitePreprocessor from "cypress-vite";
 
 const defaultBaseUrl = "http://127.0.0.1:5173";
 
-// --- 1. Define your Vite aliases in ONE place ---
-// We will use this object for all Cypress-related Vite configs
-const sharedViteConfig = {
-  resolve: {
-    alias: {
-      "@/components": path.resolve(__dirname, "src/components"),
-      "@/core": path.resolve(__dirname, "src/core"),
-      "@/types": path.resolve(__dirname, "src/types"),
-      "@/assets": path.resolve(__dirname, "src/assets"),
-      "@pom": path.resolve(__dirname, "cypress/support/pom"),
-      "@factories": path.resolve(__dirname, "cypress/support/factories"),
-      "@fixtures": path.resolve(__dirname, "cypress/fixtures"),
-    },
-  },
-};
+// 1. Define the path to our new, safe config file
+const cypressViteConfigPath = path.resolve(__dirname, "cypress.vite.config.ts");
 
 export default defineConfig({
   e2e: {
@@ -31,9 +18,8 @@ export default defineConfig({
       on(
         "file:preprocessor",
         vitePreprocessor({
-          // --- 2. Use the shared config INLINE for E2E specs ---
-          // We pass the config object directly, NOT the file path.
-          ...sharedViteConfig,
+          // 2. Point the E2E preprocessor to the new file
+          configFile: cypressViteConfigPath,
         })
       );
 
@@ -46,15 +32,18 @@ export default defineConfig({
     devServer: {
       framework: "react",
       bundler: "vite",
-      // --- 3. Use the shared config for the dev server ---
-      viteConfig: sharedViteConfig,
+
+      // 3. Point the component dev server to the new file
+      viteConfig: {
+        configFile: cypressViteConfigPath,
+      },
     },
     setupNodeEvents(on, config) {
       on(
         "file:preprocessor",
         vitePreprocessor({
-          // --- 4. Use the same shared config INLINE for component specs ---
-          ...sharedViteConfig,
+          // 4. Point the component preprocessor to the new file
+          configFile: cypressViteConfigPath,
         })
       );
       return config;
