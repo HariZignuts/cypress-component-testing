@@ -1,4 +1,4 @@
-name: CI - Cypress Tests
+name: Cypress CI
 
 on:
   push:
@@ -8,68 +8,78 @@ on:
 
 jobs:
   ###############################################
-  # COMPONENT TESTS (FAST, no dev server needed)
+  # COMPONENT TESTS
   ###############################################
-  component:
+  component-tests:
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: ./ # adjust if your project is in a subfolder
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: "pnpm"
 
-      - run: pnpm install
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Run Cypress Component Tests
         uses: cypress-io/github-action@v6
         with:
+          # Tell it to run component tests
           component: true
           browser: chrome
+        env:
+          # --- THIS IS THE FIX for the component test error ---
+          # Unset the baseUrl so it doesn't conflict.
+          CYPRESS_BASE_URL: ""
 
   ###############################################
-  # E2E TESTS — needs Vite dev server
+  # E2E TESTS
   ###############################################
-  e2e:
+  e2e-tests:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: ./ # adjust if your project is in a subfolder
+    # --- ADD THIS job-level env var ---
+    env:
+      APP_URL: http://127.0.0.1:5173
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: "pnpm"
 
-      - run: pnpm install
+      - name: Install dependencies
+        run: pnpm install
 
-      # Start server + wait + run tests
-      - name: Start Vite dev server
-        run: pnpm dev &
-
-      - name: Wait for server
-        run: npx wait-on http://127.0.0.1:5173
-
+      # --- THIS IS THE FIX for the E2E error ---
+      # We let the Cypress Action handle starting the server.
+      # We can remove the manual "pnpm dev &" and "wait-on" steps.
       - name: Run Cypress E2E Tests
         uses: cypress-io/github-action@v6
         with:
           browser: chrome
-          config: baseUrl=http://127.0.0.1:5173
-          config-file: cypress.config.ts
-          start: ""
+          # 1. Tell the action WHAT command starts your server
+          start: pnpm run dev
+          # 2. Tell it WHICH URL to wait for
+          wait-on: ${{ env.APP_URL }}
+        env:
+          # 3. Pass the URL to Cypress as its baseUrl
+          CYPRESS_BASE_URL: ${{ env.APP_URL }}
